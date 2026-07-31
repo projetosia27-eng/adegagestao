@@ -1,0 +1,49 @@
+{
+  "name": "AdegaHub - Marketplace & Gestão de Adegas",
+  "short_name": "AdegaHub",
+  "description": "Marketplace e gerenciador inteligente de adegas com catálogo, pedidos em tempo real e entrega.",
+  "start_url": "/",
+  "scope": "/",
+  "id": "/",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#09090b",
+  "theme_color": "#d97706",
+  "categories": ["shopping", "food", "lifestyle", "business"],
+  "icons": [
+    {
+      "src": "/pwa-192x192.svg",
+      "sizes": "192x192",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    },
+    {
+      "src": "/pwa-512x512.svg",
+      "sizes": "512x512",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    },
+    {
+      "src": "/pwa-512x512.svg",
+      "sizes": "512x512",
+      "type": "image/svg+xml",
+      "purpose": "maskable"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "Catálogo de Adegas",
+      "short_name": "Adegas",
+      "description": "Buscar adegas próximas de você",
+      "url": "/cliente/home",
+      "icons": [{ "src": "/pwa-192x192.svg", "sizes": "192x192" }]
+    },
+    {
+      "name": "Painel do Vendedor",
+      "short_name": "Vendedor",
+      "description": "Gerenciar pedidos e produtos",
+      "url": "/vendedor/dashboard",
+      "icons": [{ "src": "/pwa-192x192.svg", "sizes": "192x192" }]
+    }
+  ]
+}

@@ -1,0 +1,18 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 180 180" width="180" height="180">
+  <rect width="180" height="180" rx="40" fill="#09090b"/>
+  <defs>
+    <linearGradient id="goldApple" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#fbbf24"/>
+      <stop offset="100%" stop-color="#d97706"/>
+    </linearGradient>
+    <linearGradient id="purpleApple" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#9333ea"/>
+      <stop offset="100%" stop-color="#3b0764"/>
+    </linearGradient>
+  </defs>
+  <path d="M 62 48 C 62 90, 118 90, 118 48 Z" fill="url(#goldApple)"/>
+  <path d="M 67 51 C 67 83, 113 83, 113 51 Z" fill="#18181b"/>
+  <path d="M 70 62 C 81 67, 100 57, 110 62 C 112 71, 107 81, 90 82 C 73 81, 68 71, 70 62 Z" fill="url(#purpleApple)"/>
+  <rect x="86" y="85" width="8" height="42" rx="4" fill="url(#goldApple)"/>
+  <path d="M 62 130 C 62 125, 118 125, 118 130 L 122 136 C 122 140, 58 140, 58 136 Z" fill="url(#goldApple)"/>
+</svg>

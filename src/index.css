@@ -1,0 +1,62 @@
+@import "tailwindcss";
+
+@theme {
+  --color-background: var(--bg-color);
+  --color-surface: var(--surface-color);
+  
+  --color-gold: #D4AF37;
+  --color-gold-light: #E6C96C;
+  --color-gold-dark: #B8962D;
+
+  --color-text-primary: var(--text-primary);
+  --color-text-secondary: var(--text-secondary);
+}
+
+@layer base {
+  :root {
+    color-scheme: dark;
+    --bg-color: #0F0F10;
+    --surface-color: #17171A;
+    --text-primary: #FFFFFF;
+    --text-secondary: #A1A1AA;
+  }
+
+  :root.light {
+    color-scheme: light;
+    --bg-color: #F8F9FA;
+    --surface-color: #FFFFFF;
+    --text-primary: #1A1A1C;
+    --text-secondary: #52525B;
+  }
+
+  body {
+    background-color: var(--color-background);
+    color: var(--color-text-primary);
+    font-family: 'Inter', system-ui, -apple-system, sans-serif;
+    overflow-x: hidden;
+  }
+}
+
+@layer utilities {
+  .pb-safe {
+    padding-bottom: calc(0.5rem + env(safe-area-inset-bottom, 0px));
+  }
+}
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--color-background);
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--color-surface);
+  border-radius: 4px;
+  border: 1px solid #27272A;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--color-gold-dark);
+}

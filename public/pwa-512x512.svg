@@ -1,0 +1,28 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+  <rect width="512" height="512" rx="128" fill="#09090b"/>
+  <rect x="16" y="16" width="480" height="480" rx="112" fill="none" stroke="#d97706" stroke-width="8" stroke-opacity="0.2"/>
+  <defs>
+    <linearGradient id="goldGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#fbbf24"/>
+      <stop offset="50%" stop-color="#d97706"/>
+      <stop offset="100%" stop-color="#92400e"/>
+    </linearGradient>
+    <linearGradient id="purpleGradient" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#7e22ce"/>
+      <stop offset="100%" stop-color="#3b0764"/>
+    </linearGradient>
+  </defs>
+  <!-- Background Glow -->
+  <circle cx="256" cy="256" r="180" fill="#d97706" opacity="0.12" filter="blur(40px)"/>
+  <!-- Wine Glass Shape -->
+  <path d="M 176 140 C 176 260, 336 260, 336 140 Z" fill="url(#goldGradient)"/>
+  <path d="M 190 148 C 190 240, 322 240, 322 148 Z" fill="#18181b"/>
+  <!-- Wine Liquid Fill -->
+  <path d="M 198 180 C 230 195, 282 165, 314 180 C 319 205, 305 232, 256 236 C 207 232, 193 205, 198 180 Z" fill="url(#purpleGradient)"/>
+  <!-- Glass Stem & Base -->
+  <rect x="246" y="240" width="20" height="120" rx="10" fill="url(#goldGradient)"/>
+  <path d="M 176 370 C 176 355, 336 355, 336 370 L 346 385 C 346 395, 166 395, 166 385 Z" fill="url(#goldGradient)"/>
+  <!-- Sparkles -->
+  <path d="M 350 120 L 356 135 L 371 141 L 356 147 L 350 162 L 344 147 L 329 141 L 344 135 Z" fill="#fbbf24"/>
+  <path d="M 150 200 L 153 210 L 163 213 L 153 216 L 150 226 L 147 216 L 137 213 L 147 210 Z" fill="#fbbf24" opacity="0.8"/>
+</svg>

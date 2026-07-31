@@ -1,0 +1,10 @@
+{
+  "name": "Remix AdegaHub",
+  "description": "Marketplace e gerenciador de adegas com dois perfis: cliente e vendedor.",
+  "requestFramePermissions": [
+    "geolocation"
+  ],
+  "majorCapabilities": [
+    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
+  ]
+}
