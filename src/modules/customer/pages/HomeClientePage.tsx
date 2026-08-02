@@ -4,7 +4,7 @@ import { Input } from '@/components/ui/Input';
 import { Button } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
 import { Badge } from '@/components/ui/Badge';
-import { Search, MapPin, Star, Clock, Map as MapIcon, ChevronRight, Store, Loader2, Package, ShoppingBag, Plus, Check } from 'lucide-react';
+import { Search, MapPin, Star, Clock, Map as MapIcon, ChevronRight, Store, Loader2, Package, ShoppingBag, Plus, Check, Navigation, Compass, Filter, Sparkles } from 'lucide-react';
 import { MapContainer, TileLayer, Marker, Popup, useMap } from 'react-leaflet';
 import 'leaflet/dist/leaflet.css';
 import L from 'leaflet';
@@ -64,13 +64,16 @@ function MapUpdater({ center }: { center: [number, number] }) {
 }
 
 export const HomeClientePage = () => {
-  const { user } = useAuth();
+  const { user, updateProfile } = useAuth();
   const [userLocation, setUserLocation] = useState<Location | null>(null);
   const [stores, setStores] = useState<StoreData[]>([]);
   const [promotions, setPromotions] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [isLocating, setIsLocating] = useState(false);
+  const [detectedAddress, setDetectedAddress] = useState<string | null>(null);
   const [locationError, setLocationError] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
+  const [selectedRadius, setSelectedRadius] = useState<number>(15); // 15km default radius
   const [showMap, setShowMap] = useState(false);
   const [addedToast, setAddedToast] = useState<string | null>(null);
 
@@ -90,34 +93,157 @@ export const HomeClientePage = () => {
 
   const requestGeolocation = () => {
     setLocationError(null);
+    setIsLocating(true);
+
     if (!navigator.geolocation) {
       setLocationError('Geolocalização não é suportada pelo seu navegador');
+      setIsLocating(false);
       fetchStores(user?.lat && user?.lng ? { lat: Number(user.lat), lng: Number(user.lng) } : null);
       return;
     }
 
     navigator.geolocation.getCurrentPosition(
-      (position) => {
+      async (position) => {
         const loc = {
           lat: position.coords.latitude,
           lng: position.coords.longitude
         };
         setUserLocation(loc);
-        fetchStores(loc);
+
+        // Reverse geocode to get street / neighborhood name
+        try {
+          const res = await fetch(
+            `https://nominatim.openstreetmap.org/reverse?format=json&lat=${loc.lat}&lon=${loc.lng}`,
+            {
+              headers: {
+                'Accept-Language': 'pt-BR,pt;q=0.9',
+                'User-Agent': 'AdegaHub/1.0'
+              }
+            }
+          );
+
+          if (res.ok) {
+            const data = await res.json();
+            if (data && data.address) {
+              const road = data.address.road || data.address.pedestrian || data.address.suburb || '';
+              const houseNum = data.address.house_number || '';
+              const neighborhood = data.address.neighbourhood || data.address.suburb || data.address.city_district || '';
+              const city = data.address.city || data.address.town || data.address.municipality || '';
+
+              let formatted = '';
+              if (road) formatted += road;
+              if (houseNum) formatted += `, ${houseNum}`;
+              if (neighborhood) formatted += `${formatted ? ' - ' : ''}${neighborhood}`;
+              if (city && !neighborhood) formatted += `${formatted ? ' - ' : ''}${city}`;
+
+              if (!formatted && data.display_name) {
+                formatted = data.display_name.split(',').slice(0, 2).join(', ');
+              }
+
+              if (formatted) {
+                setDetectedAddress(formatted);
+                setAddedToast(`Localização obtida: ${formatted}`);
+                setTimeout(() => setAddedToast(null), 4000);
+
+                if (user?.id && updateProfile) {
+                  updateProfile({
+                    lat: loc.lat,
+                    lng: loc.lng,
+                    address: road || formatted,
+                    neighborhood: neighborhood,
+                    city: city
+                  }).catch(e => console.warn('Erro ao salvar localização no perfil:', e));
+                }
+              }
+            }
+          }
+        } catch (err) {
+          console.warn('Geolocalização reversa falhou:', err);
+          setDetectedAddress('Localização GPS capturada');
+          setAddedToast('Sua localização atual foi obtida via GPS!');
+          setTimeout(() => setAddedToast(null), 3000);
+        } finally {
+          setIsLocating(false);
+          fetchStores(loc);
+        }
       },
       (error) => {
-        console.warn('Aviso de geolocalização:', error.message);
+        setIsLocating(false);
+        console.warn('Erro ao obter localização:', error.message);
+
+        let msg = 'Não foi possível obter sua localização atual.';
+        if (error.code === 1) {
+          msg = 'Permissão de localização negada pelo navegador. Ative a geolocalização e tente novamente.';
+        } else if (error.code === 2) {
+          msg = 'Sinal de GPS indisponível no seu dispositivo.';
+        } else if (error.code === 3) {
+          msg = 'Tempo limite esgotado ao tentar obter localização.';
+        }
+
         if (user?.lat && user?.lng) {
           const loc = { lat: Number(user.lat), lng: Number(user.lng) };
           setUserLocation(loc);
           fetchStores(loc);
         } else {
-          setLocationError('Mostrando todas as adegas disponíveis.');
+          setLocationError(msg);
           fetchStores(null);
         }
       },
-      { timeout: 10000 }
+      {
+        enableHighAccuracy: true,
+        timeout: 15000,
+        maximumAge: 0
+      }
     );
+  };
+
+  const generateNearbyDemoStores = () => {
+    const loc = userLocation || { lat: -23.561684, lng: -46.655981 };
+    const locName = detectedAddress ? detectedAddress.split(',')[0].trim() : 'Sua Região';
+
+    const localStores: StoreData[] = [
+      {
+        id: `demo-local-1-${Date.now()}`,
+        name: `Adega Express - ${locName}`,
+        logo_url: 'https://images.unsplash.com/photo-1510812431401-41d2bd2722f3?w=200&h=200&fit=crop',
+        lat: loc.lat + 0.005,
+        lng: loc.lng + 0.005,
+        delivery_fee: 0,
+        minimum_order: 25,
+        is_open: true,
+        rating: 4.9,
+        distance: calculateDistance(loc.lat, loc.lng, loc.lat + 0.005, loc.lng + 0.005)
+      },
+      {
+        id: `demo-local-2-${Date.now()}`,
+        name: `Empório & Conveniência 24h`,
+        logo_url: 'https://images.unsplash.com/photo-1528823872057-9c018a7a70b3?w=200&h=200&fit=crop',
+        lat: loc.lat - 0.007,
+        lng: loc.lng - 0.007,
+        delivery_fee: 4.90,
+        minimum_order: 20,
+        is_open: true,
+        rating: 4.8,
+        distance: calculateDistance(loc.lat, loc.lng, loc.lat - 0.007, loc.lng - 0.007)
+      }
+    ];
+
+    setStores(prev => {
+      const filtered = prev.filter(s => !s.id.startsWith('demo-local-'));
+      return [...localStores, ...filtered].sort((a, b) => {
+        if (a.distance !== undefined && b.distance !== undefined) return a.distance - b.distance;
+        return 0;
+      });
+    });
+
+    setPromotions(prev => [
+      { id: `p-1-${Date.now()}`, storeId: localStores[0].id, storeName: localStores[0].name, name: 'Vinho Tinto Reserva Especial', price: 49.9, originalPrice: 79.9, image: 'https://images.unsplash.com/photo-1585553616435-2dc0a54e271d?w=200&h=300&fit=crop' },
+      { id: `p-2-${Date.now()}`, storeId: localStores[1].id, storeName: localStores[1].name, name: 'Cerveja Artesanal Pack 6x', price: 34.9, originalPrice: 45.0, image: 'https://images.unsplash.com/photo-1535958636474-b021ee887b13?w=200&h=300&fit=crop' },
+      ...prev
+    ]);
+
+    setAddedToast('Adegas locais demonstrativas geradas próximo à sua localização!');
+    setTimeout(() => setAddedToast(null), 3500);
   };
 
   const fetchStores = async (location: Location | null) => {
@@ -155,7 +281,7 @@ export const HomeClientePage = () => {
             minimum_order: 30,
             is_open: true,
             rating: 4.9,
-            distance: 0.8
+            distance: location ? calculateDistance(location.lat, location.lng, location.lat + 0.005, location.lng + 0.005) : 0.8
           },
           {
             id: 'adega-demo-2',
@@ -167,7 +293,7 @@ export const HomeClientePage = () => {
             minimum_order: 20,
             is_open: true,
             rating: 4.7,
-            distance: 1.4
+            distance: location ? calculateDistance(location.lat, location.lng, location.lat - 0.008, location.lng - 0.008) : 1.4
           }
         ];
         
@@ -282,28 +408,47 @@ export const HomeClientePage = () => {
     setTimeout(() => setAddedToast(null), 3000);
   };
 
-  const filteredStores = stores.filter(store => 
-    store.name.toLowerCase().includes(searchQuery.toLowerCase())
-  );
+  const filteredStores = stores.filter(store => {
+    const matchesSearch = store.name.toLowerCase().includes(searchQuery.toLowerCase());
+    if (!matchesSearch) return false;
+
+    if (userLocation && selectedRadius > 0) {
+      if (store.distance !== undefined && store.distance > selectedRadius) {
+        return false;
+      }
+    }
+
+    return true;
+  });
 
   return (
     <div className="min-h-screen bg-background pb-20">
       {/* Header & Search */}
       <div className="sticky top-0 z-40 bg-surface/80 backdrop-blur-md border-b border-zinc-800 p-4">
         <div className="max-w-7xl mx-auto flex flex-col gap-4">
-          <div className="flex items-center justify-between">
-            <div className="flex flex-col">
+          <div className="flex items-center justify-between gap-2">
+            <div className="flex flex-col min-w-0">
               <span className="text-xs text-text-secondary">Entregando em</span>
               <button 
                 onClick={requestGeolocation}
-                className="flex items-center text-sm font-medium text-white group"
+                disabled={isLocating}
+                className="flex items-center text-sm font-medium text-white group cursor-pointer hover:text-gold transition-colors text-left"
+                title="Clique para atualizar e obter sua localização atual via GPS"
               >
-                <MapPin className="w-4 h-4 text-gold mr-1 group-hover:scale-110 transition-transform shrink-0" />
-                <span className="truncate max-w-[220px] sm:max-w-[320px]">
-                  {user?.address ? (
+                {isLocating ? (
+                  <Loader2 className="w-4 h-4 text-gold mr-1.5 animate-spin shrink-0" />
+                ) : (
+                  <MapPin className="w-4 h-4 text-gold mr-1 group-hover:scale-110 transition-transform shrink-0" />
+                )}
+                <span className="truncate max-w-[180px] sm:max-w-[340px]">
+                  {isLocating ? (
+                    <span className="text-gold font-medium">Obtendo sua localização atual...</span>
+                  ) : detectedAddress ? (
+                    detectedAddress
+                  ) : user?.address ? (
                     `${user.address}${user.number ? `, ${user.number}` : ''}${user.neighborhood ? ` - ${user.neighborhood}` : ''}`
                   ) : userLocation ? (
-                    'Localização capturada'
+                    'Localização capturada (GPS)'
                   ) : (
                     'Obter minha localização...'
                   )}
@@ -311,6 +456,22 @@ export const HomeClientePage = () => {
                 <ChevronRight className="w-4 h-4 ml-1 opacity-50 group-hover:opacity-100 shrink-0" />
               </button>
             </div>
+
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={requestGeolocation}
+              disabled={isLocating}
+              className="border-gold/30 text-gold hover:bg-gold/10 hover:border-gold text-xs font-semibold shrink-0 gap-1.5"
+            >
+              {isLocating ? (
+                <Loader2 className="w-3.5 h-3.5 animate-spin" />
+              ) : (
+                <MapPin className="w-3.5 h-3.5" />
+              )}
+              <span className="hidden sm:inline">Obter GPS</span>
+              <span className="sm:hidden">GPS</span>
+            </Button>
           </div>
           
           <div className="relative">
@@ -328,8 +489,30 @@ export const HomeClientePage = () => {
       <div className="max-w-7xl mx-auto p-4 space-y-8">
         
         {locationError && (
-          <div className="bg-rose-500/10 border border-rose-500/20 text-rose-500 p-3 rounded-lg text-sm">
-            {locationError}
+          <div className="bg-rose-500/10 border border-rose-500/20 text-rose-400 p-4 rounded-xl text-sm flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 shadow-sm">
+            <div className="flex items-center gap-2">
+              <MapPin className="w-5 h-5 text-rose-400 shrink-0" />
+              <span>{locationError}</span>
+            </div>
+            <Button 
+              size="sm" 
+              variant="outline"
+              onClick={requestGeolocation}
+              disabled={isLocating}
+              className="border-rose-500/40 text-rose-300 hover:bg-rose-500/20 text-xs shrink-0"
+            >
+              {isLocating ? (
+                <>
+                  <Loader2 className="w-3.5 h-3.5 mr-1.5 animate-spin" />
+                  Obtendo GPS...
+                </>
+              ) : (
+                <>
+                  <MapPin className="w-3.5 h-3.5 mr-1.5" />
+                  Tentar novamente
+                </>
+              )}
+            </Button>
           </div>
         )}
 
@@ -351,18 +534,49 @@ export const HomeClientePage = () => {
           </div>
         </div>
 
-        {/* Map Toggle */}
-        <div className="flex items-center justify-between">
-          <h3 className="text-lg font-bold text-white">Adegas Cadastradas</h3>
-          <Button 
-            variant="outline" 
-            size="sm" 
-            onClick={() => setShowMap(!showMap)}
-            className="text-xs"
-          >
-            <MapIcon className="w-4 h-4 mr-2" />
-            {showMap ? 'Ocultar Mapa' : 'Ver no Mapa'}
-          </Button>
+        {/* Proximity Filter & Header */}
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-zinc-900/60 p-4 rounded-xl border border-zinc-800">
+          <div className="flex items-center gap-2">
+            <Compass className="w-5 h-5 text-gold shrink-0" />
+            <div>
+              <h3 className="text-base font-bold text-white leading-tight">Adegas Próximas</h3>
+              <p className="text-xs text-text-secondary">
+                {userLocation ? (
+                  <>Mostrando adegas até <span className="text-gold font-semibold">{selectedRadius === 0 ? 'todas as distâncias' : `${selectedRadius} km`}</span> ({filteredStores.length} disponível{filteredStores.length !== 1 ? 's' : ''})</>
+                ) : (
+                  'Obtenha sua localização via GPS para filtrar por proximidade'
+                )}
+              </p>
+            </div>
+          </div>
+
+          <div className="flex items-center gap-1.5 flex-wrap">
+            <span className="text-xs text-zinc-400 mr-1 hidden md:inline">Raio de entrega:</span>
+            {[5, 10, 15, 25, 50, 0].map((radius) => (
+              <button
+                key={radius}
+                onClick={() => setSelectedRadius(radius)}
+                className={cn(
+                  "px-2.5 py-1 rounded-lg text-xs font-semibold transition-all cursor-pointer",
+                  selectedRadius === radius
+                    ? "bg-gold text-zinc-950 font-bold shadow-sm scale-105"
+                    : "bg-zinc-800/80 text-zinc-300 hover:bg-zinc-700"
+                )}
+              >
+                {radius === 0 ? "Todas" : `${radius}km`}
+              </button>
+            ))}
+
+            <Button 
+              variant="outline" 
+              size="sm" 
+              onClick={() => setShowMap(!showMap)}
+              className="text-xs ml-1 border-zinc-700 shrink-0"
+            >
+              <MapIcon className="w-3.5 h-3.5 mr-1" />
+              {showMap ? 'Ocultar Mapa' : 'Mapa'}
+            </Button>
+          </div>
         </div>
 
         {/* Map Section */}
@@ -411,12 +625,43 @@ export const HomeClientePage = () => {
             <Loader2 className="w-8 h-8 text-gold animate-spin" />
           </div>
         ) : filteredStores.length === 0 ? (
-          <Card className="p-8 text-center bg-zinc-900/50 border-zinc-800">
-            <Store className="w-12 h-12 mx-auto text-zinc-600 mb-3" />
-            <h4 className="text-lg font-bold text-white mb-1">Nenhuma adega encontrada</h4>
-            <p className="text-sm text-text-secondary max-w-md mx-auto">
-              {searchQuery ? `Nenhuma adega encontrada correspondente a "${searchQuery}".` : 'No momento não encontramos adegas cadastradas.'}
-            </p>
+          <Card className="p-8 text-center bg-zinc-900/50 border-zinc-800 space-y-4">
+            <MapPin className="w-12 h-12 mx-auto text-gold/70" />
+            <div>
+              <h4 className="text-lg font-bold text-white mb-1">
+                {searchQuery 
+                  ? `Nenhuma adega correspondente a "${searchQuery}"`
+                  : `Nenhuma adega encontrada a até ${selectedRadius}km de você`
+                }
+              </h4>
+              <p className="text-sm text-text-secondary max-w-md mx-auto">
+                {userLocation 
+                  ? `Não encontramos adegas cadastradas dentro do raio de ${selectedRadius}km em ${detectedAddress || 'sua localização'}.`
+                  : 'Obtenha sua localização para visualizar as adegas no seu raio de entrega.'
+                }
+              </p>
+            </div>
+
+            <div className="flex flex-wrap items-center justify-center gap-3 pt-2">
+              {userLocation && selectedRadius > 0 && (
+                <Button 
+                  size="sm" 
+                  variant="outline" 
+                  onClick={() => setSelectedRadius(0)}
+                  className="border-gold/40 text-gold hover:bg-gold/10 text-xs"
+                >
+                  Ver todas as adegas (sem limite de km)
+                </Button>
+              )}
+              <Button
+                size="sm"
+                onClick={generateNearbyDemoStores}
+                className="bg-gold text-zinc-950 font-semibold hover:bg-gold-light text-xs gap-1.5"
+              >
+                <Sparkles className="w-3.5 h-3.5" />
+                Simular Adegas Locais no Meu GPS
+              </Button>
+            </div>
           </Card>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
