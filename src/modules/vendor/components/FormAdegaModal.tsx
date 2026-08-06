@@ -1,11 +1,41 @@
 import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
-import { X, Upload, Store, Image as ImageIcon, Loader2, Navigation, Search, MapPin } from 'lucide-react';
+import { X, Upload, Store, Image as ImageIcon, Loader2, Navigation, Search, MapPin, Compass } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 import { useAuth } from '@/modules/auth/hooks/useAuth';
 import { Adega } from '../pages/AdegasPage';
 import { Card } from '@/components/ui/Card';
+import { MapContainer, TileLayer, Marker, useMapEvents, useMap } from 'react-leaflet';
+import 'leaflet/dist/leaflet.css';
+import L from 'leaflet';
+
+const MapPinIcon = new L.DivIcon({
+  html: `<div style="color: #ef4444; display: flex; justify-content: center; align-items: center; drop-shadow: 0 4px 6px rgba(0,0,0,0.5);"><svg xmlns="http://www.w3.org/2000/svg" width="36" height="36" viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-map-pin"><path d="M20 10c0 4.993-5.539 10.193-7.399 11.799a1 1 0 0 1-1.202 0C9.539 20.193 4 15 4 10a8 8 0 0 1 16 0z"/><circle cx="12" cy="10" r="3" fill="white"/></svg></div>`,
+  className: 'bg-transparent',
+  iconSize: [36, 36],
+  iconAnchor: [18, 36]
+});
+
+function MapPickerEvents({ onMove }: { onMove: (lat: number, lng: number) => void }) {
+  useMapEvents({
+    dragend: (e) => {
+      const map = e.target;
+      const center = map.getCenter();
+      onMove(center.lat, center.lng);
+    }
+  });
+  return null;
+}
+
+function MapUpdater({ center }: { center: [number, number] }) {
+  const map = useMap();
+  useEffect(() => {
+    map.setView(center, map.getZoom());
+  }, [center, map]);
+  return null;
+}
+
 
 interface FormAdegaModalProps {
   isOpen: boolean;
@@ -43,8 +73,31 @@ export const FormAdegaModal = ({ isOpen, onClose, adega, onSave }: FormAdegaModa
   const [logoPreview, setLogoPreview] = useState<string>('');
   const [bannerPreview, setBannerPreview] = useState<string>('');
 
+  const diasDaSemana = ['Segunda', 'Terça', 'Quarta', 'Quinta', 'Sexta', 'Sábado', 'Domingo'];
+  const [startDay, setStartDay] = useState('Segunda');
+  const [endDay, setEndDay] = useState('Domingo');
+  const [openTime, setOpenTime] = useState('10:00');
+  const [closeTime, setCloseTime] = useState('22:00');
+
+  useEffect(() => {
+    setFormData(prev => ({
+      ...prev,
+      operating_hours: `${startDay} a ${endDay}: ${openTime} às ${closeTime}`
+    }));
+  }, [startDay, endDay, openTime, closeTime]);
+
   useEffect(() => {
     if (adega) {
+      if (adega.operating_hours) {
+        const match = adega.operating_hours.match(/([a-zA-Záéíóúãõç]+) a ([a-zA-Záéíóúãõç]+): ([\d:]+) às ([\d:]+)/i);
+        if (match) {
+          setStartDay(match[1]);
+          setEndDay(match[2]);
+          setOpenTime(match[3]);
+          setCloseTime(match[4]);
+        }
+      }
+      
       setFormData({
         name: adega.name || '',
         description: adega.description || '',
@@ -543,7 +596,7 @@ CREATE POLICY "Acesso total a stores" ON public.stores FOR ALL USING (true);`;
                       Buscar Coordenadas pelo Endereço
                     </Button>
                   </div>
-                  <div className="grid grid-cols-2 gap-4">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-3">
                     <div>
                       <label className="block text-xs text-text-secondary mb-1">Latitude</label>
                       <Input 
@@ -569,6 +622,34 @@ CREATE POLICY "Acesso total a stores" ON public.stores FOR ALL USING (true);`;
                       />
                     </div>
                   </div>
+                  
+                  <div className="h-48 w-full rounded-lg overflow-hidden relative border border-zinc-800 mt-2">
+                    <MapContainer 
+                      center={formData.lat && formData.lng ? [parseFloat(formData.lat), parseFloat(formData.lng)] : [-23.550520, -46.633308]} 
+                      zoom={15} 
+                      className="w-full h-full z-0"
+                    >
+                      <TileLayer
+                        attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+                        url="https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png"
+                      />
+                      <MapUpdater center={formData.lat && formData.lng ? [parseFloat(formData.lat), parseFloat(formData.lng)] : [-23.550520, -46.633308]} />
+                      <MapPickerEvents onMove={(lat, lng) => {
+                        setFormData(prev => ({
+                          ...prev,
+                          lat: lat.toFixed(6),
+                          lng: lng.toFixed(6)
+                        }));
+                      }} />
+                      {(formData.lat && formData.lng) && (
+                        <Marker position={[parseFloat(formData.lat), parseFloat(formData.lng)]} icon={MapPinIcon} />
+                      )}
+                    </MapContainer>
+                    <div className="absolute top-2 left-1/2 -translate-x-1/2 z-[1000] bg-zinc-900/90 text-zinc-300 px-3 py-1.5 rounded-full text-xs flex items-center shadow-md border border-zinc-800/50 pointer-events-none">
+                      <Compass className="w-3.5 h-3.5 mr-1.5 text-gold" />
+                      Arraste o mapa para ajustar
+                    </div>
+                  </div>
                 </div>
 
               </div>
@@ -582,16 +663,48 @@ CREATE POLICY "Acesso total a stores" ON public.stores FOR ALL USING (true);`;
               <div className="space-y-4">
                 <div>
                   <label className="block text-sm font-medium text-text-secondary mb-1">Horário de Funcionamento *</label>
-                  <Input 
-                    name="operating_hours"
-                    value={formData.operating_hours || ""}
-                    onChange={handleChange}
-                    required
-                    placeholder="Ex: Seg a Sáb: 10h às 22h"
-                    className="bg-zinc-900 border-zinc-800"
-                  />
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <label className="block text-xs text-text-secondary">Dias da semana</label>
+                      <div className="flex items-center gap-2">
+                        <select 
+                          value={startDay}
+                          onChange={(e) => setStartDay(e.target.value)}
+                          className="w-full bg-zinc-900 border border-zinc-800 rounded-lg p-2 text-sm text-white focus:outline-none focus:border-gold"
+                        >
+                          {diasDaSemana.map(d => <option key={d} value={d}>{d}</option>)}
+                        </select>
+                        <span className="text-zinc-500 text-sm">a</span>
+                        <select 
+                          value={endDay}
+                          onChange={(e) => setEndDay(e.target.value)}
+                          className="w-full bg-zinc-900 border border-zinc-800 rounded-lg p-2 text-sm text-white focus:outline-none focus:border-gold"
+                        >
+                          {diasDaSemana.map(d => <option key={d} value={d}>{d}</option>)}
+                        </select>
+                      </div>
+                    </div>
+                    <div className="space-y-2">
+                      <label className="block text-xs text-text-secondary">Horários</label>
+                      <div className="flex items-center gap-2">
+                        <input
+                          type="time"
+                          value={openTime}
+                          onChange={(e) => setOpenTime(e.target.value)}
+                          className="w-full bg-zinc-900 border border-zinc-800 rounded-lg p-2 text-sm text-white focus:outline-none focus:border-gold"
+                        />
+                        <span className="text-zinc-500 text-sm">às</span>
+                        <input
+                          type="time"
+                          value={closeTime}
+                          onChange={(e) => setCloseTime(e.target.value)}
+                          className="w-full bg-zinc-900 border border-zinc-800 rounded-lg p-2 text-sm text-white focus:outline-none focus:border-gold"
+                        />
+                      </div>
+                    </div>
+                  </div>
                 </div>
-                <div className="grid grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div>
                     <label className="block text-sm font-medium text-text-secondary mb-1">Taxa de Entrega (R$)</label>
                     <Input 
@@ -625,11 +738,11 @@ CREATE POLICY "Acesso total a stores" ON public.stores FOR ALL USING (true);`;
           </form>
         </div>
 
-        <div className="p-6 border-t border-zinc-800 bg-zinc-900/50 flex justify-end gap-3 sticky bottom-0 rounded-b-xl">
-          <Button variant="secondary" type="button" onClick={onClose} disabled={loading}>
+        <div className="p-6 border-t border-zinc-800 bg-zinc-900/50 flex flex-col-reverse sm:flex-row justify-end gap-3 sticky bottom-0 rounded-b-xl">
+          <Button variant="secondary" type="button" onClick={onClose} disabled={loading} className="w-full sm:w-auto">
             Cancelar
           </Button>
-          <Button type="submit" form="adega-form" disabled={loading} className="min-w-[120px] bg-gold text-zinc-950 hover:bg-gold/90 font-bold">
+          <Button type="submit" form="adega-form" disabled={loading} className="w-full sm:w-auto min-w-[120px] bg-gold text-zinc-950 hover:bg-gold/90 font-bold">
             {loading ? <Loader2 className="w-5 h-5 animate-spin" /> : 'Salvar Adega'}
           </Button>
         </div>

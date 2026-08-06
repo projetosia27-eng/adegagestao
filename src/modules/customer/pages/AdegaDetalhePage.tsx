@@ -196,39 +196,7 @@ export const AdegaDetalhePage = () => {
               }))
             );
           } else {
-            // Fallback products for existing store with 0 products
-            setProducts([
-              {
-                id: `${id}-prod-1`,
-                category: 'Vinhos Tintos',
-                name: 'Vinho Tinto Cabernet Sauvignon 750ml',
-                description: 'Vinho encorpado com notas de frutas vermelhas e carvalho.',
-                price: 79.90,
-                promotional_price: 49.90,
-                image_url: 'https://images.unsplash.com/photo-1510812431401-41d2bd2722f3?w=300&h=300&fit=crop',
-                stock: 15
-              },
-              {
-                id: `${id}-prod-2`,
-                category: 'Espumantes',
-                name: 'Espumante Brut Rosé 750ml',
-                description: 'Espumante refrescante com bolhas finas.',
-                price: 120.00,
-                promotional_price: 89.90,
-                image_url: 'https://images.unsplash.com/photo-1590595906931-81f04f0ccebb?w=300&h=300&fit=crop',
-                stock: 10
-              },
-              {
-                id: `${id}-prod-3`,
-                category: 'Destilados',
-                name: 'Whisky 12 Anos Importado 1L',
-                description: 'Whisky escocês envelhecido 12 anos em barris de carvalho.',
-                price: 189.90,
-                promotional_price: 159.90,
-                image_url: 'https://images.unsplash.com/photo-1527281400683-1aae777175f8?w=300&h=300&fit=crop',
-                stock: 8
-              }
-            ]);
+            setProducts([]);
           }
         }
       } catch (error) {
