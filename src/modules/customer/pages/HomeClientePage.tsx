@@ -89,6 +89,7 @@ export const HomeClientePage = () => {
   const [locationMode, setLocationMode] = useState<'gps' | 'profile' | 'manual'>('gps');
   const [stores, setStores] = useState<StoreData[]>([]);
   const [promotions, setPromotions] = useState<any[]>([]);
+  const [campaigns, setCampaigns] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [isLocating, setIsLocating] = useState(false);
   const [detectedAddress, setDetectedAddress] = useState<string | null>(null);
@@ -111,6 +112,17 @@ export const HomeClientePage = () => {
   // Automatically capture live GPS on initial page load (like iFood)
   useEffect(() => {
     requestGeolocation();
+    
+    // Load campaigns from localStorage
+    const savedCampaigns = localStorage.getItem('@adegahub:promotions');
+    if (savedCampaigns) {
+      try {
+        const parsed = JSON.parse(savedCampaigns);
+        setCampaigns(parsed.filter((p: any) => p.is_active));
+      } catch(e) {
+        console.error('Error loading campaigns', e);
+      }
+    }
   }, []);
 
   const requestGeolocation = () => {
@@ -566,6 +578,32 @@ export const HomeClientePage = () => {
 
       <div className="max-w-7xl mx-auto p-4 space-y-8">
         
+        {/* Campanhas Promocionais */}
+        {campaigns.length > 0 && (
+          <div className="flex gap-4 overflow-x-auto pb-2 -mx-4 px-4 sm:mx-0 sm:px-0 snap-x snap-mandatory [&::-webkit-scrollbar]:hidden">
+            {campaigns.map((campaign, index) => (
+              <div 
+                key={campaign.id || index} 
+                className="min-w-[280px] sm:min-w-[320px] max-w-[320px] snap-center shrink-0 rounded-2xl overflow-hidden relative group cursor-pointer border border-zinc-800 shadow-lg shadow-black/50"
+              >
+                <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/40 to-transparent z-10 pointer-events-none"></div>
+                {campaign.banner_url ? (
+                  <img src={campaign.banner_url} alt={campaign.title} className="w-full h-40 sm:h-48 object-cover group-hover:scale-105 transition-transform duration-500" />
+                ) : (
+                  <div className="w-full h-40 sm:h-48 bg-zinc-900 flex items-center justify-center">
+                    <Sparkles className="w-8 h-8 text-gold/50" />
+                  </div>
+                )}
+                <div className="absolute bottom-0 left-0 right-0 p-4 z-20">
+                  <Badge className="bg-gold text-zinc-950 font-bold mb-2 text-[10px] uppercase tracking-wider">Oferta Especial</Badge>
+                  <h3 className="text-white font-bold font-display text-lg leading-tight mb-1">{campaign.title}</h3>
+                  <p className="text-zinc-300 text-xs line-clamp-1">{campaign.description}</p>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+
         {locationError && (
           <div className="bg-rose-500/10 border border-rose-500/20 text-rose-400 p-4 rounded-xl text-sm flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 shadow-sm">
             <div className="flex items-center gap-2">

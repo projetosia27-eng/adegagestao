@@ -5,25 +5,28 @@
   --color-surface: var(--surface-color);
   
   --color-gold: #D4AF37;
-  --color-gold-light: #E6C96C;
-  --color-gold-dark: #B8962D;
-
+  --color-gold-light: #F3E5AB;
+  --color-gold-dark: #A67C00;
+  
   --color-text-primary: var(--text-primary);
   --color-text-secondary: var(--text-secondary);
+
+  --font-display: 'Playfair Display', serif;
+  --font-sans: 'Inter', system-ui, sans-serif;
 }
 
 @layer base {
   :root {
     color-scheme: dark;
-    --bg-color: #0F0F10;
-    --surface-color: #17171A;
+    --bg-color: #0a0708;
+    --surface-color: #140d10;
     --text-primary: #FFFFFF;
-    --text-secondary: #A1A1AA;
+    --text-secondary: #a3989c;
   }
 
   :root.light {
     color-scheme: light;
-    --bg-color: #F8F9FA;
+    --bg-color: #FAFAFA;
     --surface-color: #FFFFFF;
     --text-primary: #1A1A1C;
     --text-secondary: #52525B;
@@ -32,8 +35,13 @@
   body {
     background-color: var(--color-background);
     color: var(--color-text-primary);
-    font-family: 'Inter', system-ui, -apple-system, sans-serif;
+    font-family: var(--font-sans);
     overflow-x: hidden;
+  }
+  
+  h1, h2, h3, h4, h5, h6 {
+    font-family: var(--font-display);
+    letter-spacing: -0.02em;
   }
 }
 
@@ -42,21 +50,19 @@
     padding-bottom: calc(0.5rem + env(safe-area-inset-bottom, 0px));
   }
 }
+
 ::-webkit-scrollbar {
   width: 8px;
   height: 8px;
 }
-
 ::-webkit-scrollbar-track {
   background: var(--color-background);
 }
-
 ::-webkit-scrollbar-thumb {
-  background: var(--color-surface);
+  background: #23161a;
   border-radius: 4px;
-  border: 1px solid #27272A;
+  border: 1px solid #38242a;
 }
-
 ::-webkit-scrollbar-thumb:hover {
   background: var(--color-gold-dark);
 }

@@ -18,7 +18,7 @@ export const Header = () => {
           <div className="w-8 h-8 bg-gradient-to-br from-gold to-gold-dark rounded-lg flex items-center justify-center shadow-md shadow-gold/20">
             <Wine className="w-5 h-5 text-zinc-950" />
           </div>
-          <span className="font-bold text-white text-base tracking-tight font-display">AdegaHub</span>
+          <span className="font-bold text-white text-base tracking-tight font-display">Adega Prime</span>
         </Link>
 
         {/* Desktop Status Badge */}

@@ -24,7 +24,8 @@ export const BottomNavigation = () => {
   const vendorLinks: Array<{ to: string; icon: any; label: string; isCart?: boolean }> = [
     { to: '/vendedor/dashboard', icon: LayoutDashboard, label: 'Início' },
     { to: '/vendedor/pedidos', icon: Store, label: 'Pedidos' },
-    { to: '/vendedor/adegas', icon: Box, label: 'Adegas' },
+    { to: '/vendedor/produtos', icon: Box, label: 'Produtos' },
+    { to: '/vendedor/promocoes', icon: Wine, label: 'Promos' },
     { to: '/vendedor/configuracoes', icon: Settings, label: 'Ajustes' },
   ];
 

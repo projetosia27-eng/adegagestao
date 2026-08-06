@@ -25,8 +25,10 @@ export const Sidebar = () => {
   const vendorLinks: Array<{ to: string; icon: any; label: string; isCart?: boolean }> = [
     { to: '/vendedor/dashboard', icon: LayoutDashboard, label: 'Dashboard' },
     { to: '/vendedor/pedidos', icon: Store, label: 'Pedidos' },
-    { to: '/vendedor/adegas', icon: Box, label: 'Minhas Adegas' },
-    { to: '/vendedor/financeiro', icon: Wine, label: 'Financeiro' },
+    { to: '/vendedor/adegas', icon: Store, label: 'Minhas Adegas' },
+    { to: '/vendedor/produtos', icon: Box, label: 'Produtos' },
+    { to: '/vendedor/promocoes', icon: Wine, label: 'Promoções' },
+    { to: '/vendedor/financeiro', icon: LayoutDashboard, label: 'Financeiro' },
     { to: '/vendedor/configuracoes', icon: Settings, label: 'Configurações' },
   ];
 
@@ -39,8 +41,8 @@ export const Sidebar = () => {
           <div className="w-8 h-8 bg-gradient-to-br from-gold to-gold-dark rounded-lg shadow-lg shadow-gold/20 flex items-center justify-center group-hover:scale-105 transition-transform">
             <div className="w-4 h-4 border-2 border-background/80 rounded-sm"></div>
           </div>
-          <h1 className="text-xl font-bold tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-white to-text-secondary">
-            AdegaHub
+          <h1 className="text-xl font-bold tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-gold to-gold-dark font-display">
+            Adega Prime
           </h1>
         </Link>
         <nav className="space-y-1">

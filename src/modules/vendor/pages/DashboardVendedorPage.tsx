@@ -215,7 +215,7 @@ export const DashboardVendedorPage = () => {
 
       {/* Metric Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        <Card className="p-5 flex flex-col justify-between border-t-2 border-t-gold">
+        <Card className="p-5 flex flex-col justify-between border border-gold/30 bg-gradient-to-br from-surface to-zinc-900 shadow-xl shadow-gold/5">
           <div className="flex items-center justify-between mb-4">
             <h3 className="text-text-secondary text-sm font-medium">Vendas Hoje</h3>
             <div className="w-8 h-8 rounded-lg bg-gold/10 flex items-center justify-center text-gold">
@@ -223,12 +223,12 @@ export const DashboardVendedorPage = () => {
             </div>
           </div>
           <div>
-            <div className="text-2xl font-bold text-white">R$ {salesToday.toFixed(2)}</div>
+            <div className="text-3xl font-bold text-white font-display">R$ {salesToday.toFixed(2)}</div>
             <p className="text-text-secondary text-xs mt-1">Pedidos do dia</p>
           </div>
         </Card>
 
-        <Card className="p-5 flex flex-col justify-between">
+        <Card className="p-5 flex flex-col justify-between border border-zinc-800/50 bg-gradient-to-br from-surface to-zinc-900 shadow-xl shadow-black/20 hover:border-zinc-700 transition-colors">
           <div className="flex items-center justify-between mb-4">
             <h3 className="text-text-secondary text-sm font-medium">Vendas da Semana</h3>
             <div className="w-8 h-8 rounded-lg bg-blue-500/10 flex items-center justify-center text-blue-500">
@@ -236,12 +236,12 @@ export const DashboardVendedorPage = () => {
             </div>
           </div>
           <div>
-            <div className="text-2xl font-bold text-white">R$ {salesWeek.toFixed(2)}</div>
+            <div className="text-3xl font-bold text-white font-display">R$ {salesWeek.toFixed(2)}</div>
             <p className="text-text-secondary text-xs mt-1">Acumulado da semana</p>
           </div>
         </Card>
 
-        <Card className="p-5 flex flex-col justify-between">
+        <Card className="p-5 flex flex-col justify-between border border-zinc-800/50 bg-gradient-to-br from-surface to-zinc-900 shadow-xl shadow-black/20 hover:border-zinc-700 transition-colors">
           <div className="flex items-center justify-between mb-4">
             <h3 className="text-text-secondary text-sm font-medium">Vendas do Mês</h3>
             <div className="w-8 h-8 rounded-lg bg-emerald-500/10 flex items-center justify-center text-emerald-500">
@@ -249,12 +249,12 @@ export const DashboardVendedorPage = () => {
             </div>
           </div>
           <div>
-            <div className="text-2xl font-bold text-white">R$ {salesMonth.toFixed(2)}</div>
+            <div className="text-3xl font-bold text-white font-display">R$ {salesMonth.toFixed(2)}</div>
             <p className="text-text-secondary text-xs mt-1">Acumulado do mês</p>
           </div>
         </Card>
 
-        <Card className="p-5 flex flex-col justify-between">
+        <Card className="p-5 flex flex-col justify-between border border-zinc-800/50 bg-gradient-to-br from-surface to-zinc-900 shadow-xl shadow-black/20 hover:border-zinc-700 transition-colors">
           <div className="flex items-center justify-between mb-4">
             <h3 className="text-text-secondary text-sm font-medium">Ticket Médio</h3>
             <div className="w-8 h-8 rounded-lg bg-purple-500/10 flex items-center justify-center text-purple-500">
@@ -262,7 +262,7 @@ export const DashboardVendedorPage = () => {
             </div>
           </div>
           <div>
-            <div className="text-2xl font-bold text-white">R$ {ticketMedio.toFixed(2)}</div>
+            <div className="text-3xl font-bold text-white font-display">R$ {ticketMedio.toFixed(2)}</div>
             <p className="text-text-secondary text-xs mt-1">Com base em {totalOrdersCount} pedidos</p>
           </div>
         </Card>

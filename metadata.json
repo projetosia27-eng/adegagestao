@@ -1,6 +1,6 @@
 {
-  "name": "Remix AdegaHub",
-  "description": "Marketplace e gerenciador de adegas com dois perfis: cliente e vendedor.",
+  "name": "Adega Prime",
+  "description": "Marketplace e gerenciador premium de adegas com dois perfis: cliente e vendedor.",
   "requestFramePermissions": [
     "geolocation"
   ],

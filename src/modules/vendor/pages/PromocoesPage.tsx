@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Card } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
 import { Badge } from '@/components/ui/Badge';
@@ -25,21 +25,73 @@ export interface Promotion {
   products_included: number;
 }
 
+const DEFAULT_PROMOS: Promotion[] = [
+  {
+    id: 'promo-1',
+    title: 'Festival de Vinhos de Inverno',
+    description: 'Até 40% de desconto em vinhos tintos selecionados para aquecer seu inverno.',
+    start_date: new Date().toISOString(),
+    end_date: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(),
+    banner_url: 'https://images.unsplash.com/photo-1506377247377-2a5b3b417ebb?auto=format&fit=crop&q=80',
+    is_active: true,
+    products_included: 15
+  }
+];
+
 export const PromocoesPage = () => {
   const [promotions, setPromotions] = useState<Promotion[]>([]);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [promoToEdit, setPromoToEdit] = useState<Promotion | null>(null);
 
+  useEffect(() => {
+    const saved = localStorage.getItem('@adegahub:promotions');
+    if (saved) {
+      setPromotions(JSON.parse(saved));
+    } else {
+      setPromotions(DEFAULT_PROMOS);
+      localStorage.setItem('@adegahub:promotions', JSON.stringify(DEFAULT_PROMOS));
+    }
+  }, []);
+
+  const saveToStorage = (newPromos: Promotion[]) => {
+    setPromotions(newPromos);
+    localStorage.setItem('@adegahub:promotions', JSON.stringify(newPromos));
+  };
+
   const handleDelete = (id: string) => {
     if (window.confirm('Tem certeza que deseja excluir esta promoção?')) {
-      setPromotions(promotions.filter(p => p.id !== id));
+      saveToStorage(promotions.filter(p => p.id !== id));
     }
   };
 
   const handleToggleActive = (id: string) => {
-    setPromotions(promotions.map(p => 
+    saveToStorage(promotions.map(p => 
       p.id === id ? { ...p, is_active: !p.is_active } : p
     ));
+  };
+
+  const handleSave = (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    const formData = new FormData(e.currentTarget);
+    
+    const promo: Promotion = {
+      id: promoToEdit ? promoToEdit.id : `promo-${Date.now()}`,
+      title: formData.get('title') as string,
+      description: formData.get('description') as string,
+      start_date: formData.get('start_date') as string,
+      end_date: formData.get('end_date') as string,
+      banner_url: (formData.get('banner_url') as string) || null,
+      is_active: true,
+      products_included: Math.floor(Math.random() * 20) + 1 // Mock products count
+    };
+
+    if (promoToEdit) {
+      saveToStorage(promotions.map(p => p.id === promo.id ? promo : p));
+    } else {
+      saveToStorage([promo, ...promotions]);
+    }
+    
+    setIsModalOpen(false);
   };
 
   return (
@@ -49,7 +101,7 @@ export const PromocoesPage = () => {
           <h1 className="text-2xl md:text-3xl font-bold text-white tracking-tight">Promoções & Banners</h1>
           <p className="text-text-secondary mt-1">Crie campanhas temporárias para impulsionar suas vendas.</p>
         </div>
-        <Button onClick={() => { setPromoToEdit(null); setIsModalOpen(true); }}>
+        <Button onClick={() => { setPromoToEdit(null); setIsModalOpen(true); }} className="bg-gold hover:bg-gold-dark text-black font-semibold">
           <Plus className="w-4 h-4 mr-2" />
           Nova Promoção
         </Button>
@@ -61,7 +113,7 @@ export const PromocoesPage = () => {
             <Card key={promo.id} className="overflow-hidden border border-zinc-800 flex flex-col group">
               <div className="h-40 w-full relative bg-zinc-900 border-b border-zinc-800">
                 {promo.banner_url && promo.banner_url.trim() !== '' ? (
-                  <img src={promo.banner_url} alt={promo.title} className="w-full h-full object-cover" />
+                  <img src={promo.banner_url} alt={promo.title} className="w-full h-full object-cover opacity-80 mix-blend-overlay" />
                 ) : (
                   <div className="w-full h-full flex flex-col items-center justify-center text-zinc-600 bg-zinc-900/50">
                     <ImageIcon className="w-8 h-8 mb-2 opacity-50" />
@@ -79,7 +131,7 @@ export const PromocoesPage = () => {
               </div>
               
               <div className="p-5 flex-1 flex flex-col">
-                <h3 className="font-bold text-white text-lg leading-tight mb-2">{promo.title}</h3>
+                <h3 className="font-bold text-white text-lg leading-tight mb-2 font-display">{promo.title}</h3>
                 <p className="text-sm text-text-secondary line-clamp-2 mb-4 flex-1">
                   {promo.description}
                 </p>
@@ -134,22 +186,24 @@ export const PromocoesPage = () => {
 
       {isModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-background/80 backdrop-blur-sm overflow-y-auto">
-          <Card className="w-full max-w-lg my-8 bg-surface border-zinc-800 flex flex-col p-6 space-y-6 max-h-[90vh] overflow-y-auto">
-            <div className="flex items-center justify-between">
-              <h2 className="text-xl font-bold text-white">
+          <Card className="w-full max-w-lg my-8 bg-surface border-zinc-800 flex flex-col max-h-[90vh] overflow-hidden">
+            <div className="p-6 border-b border-zinc-800">
+              <h2 className="text-xl font-bold text-white font-display">
                 {promoToEdit ? 'Editar Promoção' : 'Nova Promoção'}
               </h2>
             </div>
             
-            <div className="space-y-4">
+            <form onSubmit={handleSave} className="flex-1 overflow-y-auto p-6 space-y-4">
               <div>
                 <label className="block text-sm font-medium text-text-secondary mb-1">Título da Promoção</label>
-                <Input defaultValue={promoToEdit?.title} className="bg-zinc-900 border-zinc-800" placeholder="Ex: Festival de Inverno" />
+                <Input name="title" required defaultValue={promoToEdit?.title} className="bg-zinc-900 border-zinc-800" placeholder="Ex: Festival de Inverno" />
               </div>
               
               <div>
                 <label className="block text-sm font-medium text-text-secondary mb-1">Descrição</label>
                 <textarea 
+                  name="description"
+                  required
                   className="w-full bg-zinc-900 border border-zinc-800 rounded-lg p-3 text-sm text-white focus:outline-none focus:border-gold resize-none"
                   rows={3}
                   defaultValue={promoToEdit?.description}
@@ -160,28 +214,25 @@ export const PromocoesPage = () => {
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <label className="block text-sm font-medium text-text-secondary mb-1">Início</label>
-                  <Input type="date" defaultValue={promoToEdit?.start_date?.split('T')[0]} className="bg-zinc-900 border-zinc-800" />
+                  <Input name="start_date" type="date" required defaultValue={promoToEdit?.start_date?.split('T')[0] || new Date().toISOString().split('T')[0]} className="bg-zinc-900 border-zinc-800" />
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-text-secondary mb-1">Fim</label>
-                  <Input type="date" defaultValue={promoToEdit?.end_date?.split('T')[0]} className="bg-zinc-900 border-zinc-800" />
+                  <Input name="end_date" type="date" required defaultValue={promoToEdit?.end_date?.split('T')[0]} className="bg-zinc-900 border-zinc-800" />
                 </div>
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-text-secondary mb-2">Banner Promocional (Opcional)</label>
-                <div className="relative h-32 w-full rounded-xl border-2 border-dashed border-zinc-700 bg-zinc-900 overflow-hidden flex flex-col items-center justify-center cursor-pointer hover:bg-zinc-800/50 transition-colors">
-                  <ImageIcon className="w-6 h-6 text-zinc-500 mb-2" />
-                  <span className="text-xs text-zinc-400 font-medium">Fazer upload da imagem</span>
-                </div>
+                <label className="block text-sm font-medium text-text-secondary mb-2">Banner Promocional (URL da imagem)</label>
+                <Input name="banner_url" defaultValue={promoToEdit?.banner_url || ""} className="bg-zinc-900 border-zinc-800" placeholder="https://..." />
                 <p className="text-[10px] text-text-secondary mt-1">Recomendado: 1200x400px</p>
               </div>
-            </div>
-
-            <div className="flex justify-end gap-3 pt-4 border-t border-zinc-800 sticky bottom-0 bg-surface">
-              <Button variant="secondary" onClick={() => setIsModalOpen(false)}>Cancelar</Button>
-              <Button onClick={() => setIsModalOpen(false)}>Salvar Promoção</Button>
-            </div>
+              
+              <div className="flex justify-end gap-3 pt-6 border-t border-zinc-800">
+                <Button type="button" variant="secondary" onClick={() => setIsModalOpen(false)}>Cancelar</Button>
+                <Button type="submit" className="bg-gold text-black hover:bg-gold-dark font-semibold">Salvar Promoção</Button>
+              </div>
+            </form>
           </Card>
         </div>
       )}
